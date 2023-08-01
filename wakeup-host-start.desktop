@@ -2,9 +2,9 @@
 Encoding=UTF-8
 Value=1.0
 Type=Application
-Name=WakeUp Server
-GenericName=WakeUp Server
-Comment=Ping and wakeup server
+Name=WakeUp Host
+GenericName=WakeUp Host
+Comment=Ping and wakeup host
 Icon=boot
-Exec=wakeup-host
+Exec=wakeup-host-start
 Categories=System;Network;

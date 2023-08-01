@@ -66,7 +66,6 @@ do
         d)  DELAY=${OPTARG}
             ;;
         h)  usage
-            echo MAC=${MAC}
             exit 0
             ;;
         \?) usage
@@ -75,6 +74,7 @@ do
     esac
 done
 
+
 # Stop if wakeonlan not executable
 [ ! -x "${WOL}" ] && echo "${WOL} not executable, stopped" && exit 1
 
@@ -82,10 +82,13 @@ done
 [ -z ${MAC+x} ] && echo "MAC undefined, stopped" && exit 2
 
 # Stop if DELAY not a number
-! [[ ${DELAY} =~ '^[0-9]+$' ]] && echo "DELAY not a number" && exit 3
+echo ${DELAY} | grep -qE '^[0-9]+$'
+[ $? -ne 0 ] && echo "DELAY not a number" && exit 3
 
 # Stop if RETRY not a number
-! [[ ${RETRY} =~ '^[0-9]+$' ]] && echo "RETRY not a number" && exit 4
+echo ${RETRY} | grep -qE '^[0-9]+$'
+[ $? -ne 0 ] && echo "RETRY not a number" && exit 4
+
 
 # Skip options and shift index
 shift $((OPTIND-1))
@@ -101,7 +104,6 @@ in
         TRY=0
         while [ ${TRY} -le ${RETRY} ]
         do
-            sleep ${DELAY}
             ${WOL} ${MAC}
             ECODE=$?
             if [ ${ECODE} -eq 0 ]
@@ -116,9 +118,10 @@ in
                 else
                     echo
                 fi
+                sleep ${DELAY}
             fi
             # Increment counter
-            ((TRY++))
+            TRY=$((TRY+1))
         done
         ;;
 
@@ -140,7 +143,7 @@ esac
 # Update logfile
 if [ -w "${LOGFILE}" ] && [ ${MODE} != 'restart' ] && [ ${MODE} != 'force-reload' ]
 then
-    echo "$(date '+%b %d %T'): $(hostname) $(basename $0): ${MODE} for ${MAC} issued by ${USER} $(if [ ${ECODE} -eq 0 ]; then echo "(ok)"; else echo "(error ${ECODE})"; fi)" >> ${LOGFILE}
+    echo "$(date '+%b %d %T'): $(hostname) $(basename $0): command '${MODE}' on adress '${MAC}' issued by user '$(whoami)' $(if [ ${ECODE} -eq 0 ]; then echo "(ok)"; else echo "(error ${ECODE})"; fi)" >> ${LOGFILE}
 fi
 
 # Terminate successfully
