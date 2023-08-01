@@ -146,5 +146,4 @@ then
     echo "$(date '+%b %d %T'): $(hostname) $(basename $0): command '${MODE}' on adress '${MAC}' issued by user '$(whoami)' $(if [ ${ECODE} -eq 0 ]; then echo "(ok)"; else echo "(error ${ECODE})"; fi)" >> ${LOGFILE}
 fi
 
-# Terminate successfully
 exit 0

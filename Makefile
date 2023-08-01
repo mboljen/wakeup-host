@@ -6,9 +6,9 @@ DIRS=
 PREFIX?=/usr/local
 
 #
-CP        = $(shell command -v cp)
 INSTALL   = $(shell command -v install)
 SYSTEMCTL = $(shell command -v systemctl)
+READMODE  = 644
 
 #
 INITSCRIPT     = /etc/init.d/$(NAME)
@@ -22,70 +22,92 @@ SERVICESUSPEND = /etc/systemd/system/$(NAME)-suspend.service
 
 #
 INSTALLFILES = \
-  $(INITSCRIPT) \
-  $(CONFIGFILE) \
-  $(LOGROTATE) \
-  $(LOCALBIN) \
-  $(DESKTOPENTRY) \
-  $(LOGFILE) \
-  $(SERVICEBOOT) \
-  $(SERVICESUSPEND)
+    $(INITSCRIPT) \
+    $(LOGROTATE) \
+    $(LOCALBIN) \
+    $(DESKTOPENTRY) \
+    $(SERVICEBOOT) \
+    $(SERVICESUSPEND)
 
+# Require root privileges
+ifneq ($(shell id -u),0)
+  $(error This Makefile requires root privileges)
+endif
+
+# Default target
 all:
 
+# Debugging
+debug:
+	$(info INITSCRIPT     = $(INITSCRIPT))
+	$(info CONFIGFILE     = $(CONFIGFILE))
+	$(info LOGFILE        = $(LOGFILE))
+	$(info LOGROTATE      = $(LOGROTATE))
+	$(info LOCALBIN       = $(LOCALBIN))
+	$(info DESKTOPENTRY   = $(DESKTOPENTRY))
+	$(info SERVICEBOOT    = $(SERVICEBOOT))
+	$(info SERVICESUSPEND = $(SERVICESUSPEND))
+
 clean:
+	$(info Target `clean` not implemented yet)
 
 tag:
 	git tag v$(VERSION)
 	git push --tags
 
-prerequisites: checksudo
+prerequisites:
 	apt-get -qq install wakeonlan confget
 
-enable: checksudo
+enable:
 	$(SYSTEMCTL) enable $(NAME)-boot $(NAME)-suspend
 	$(SYSTEMCTL) daemon-reload
 
-disable: checksudo
+disable:
 	$(SYSTEMCTL) disable $(NAME)-boot $(NAME)-suspend
 	$(SYSTEMCTL) daemon-reload
 
-install: checksudo prerequisites $(INSTALLFILES)
+install: prerequisites $(INSTALLFILES) $(LOGFILE) $(CONFIGFILE)
 	update-desktop-database
 
-uninstall: checksudo
+uninstall:
 	$(RM) $(INSTALLFILES)
 	update-desktop-database
 
-checksudo:
-ifneq ($(shell id -u),0)
-	$(error This target requires root privileges)
-endif
+purge: uninstall
+	$(RM) $(LOGFILE) $(CONFIGFILE)
 
-$(INITSCRIPT): $(NAME) checksudo
+# Install init script
+$(INITSCRIPT): $(NAME)
 	$(INSTALL) $< $(dir $@)
 
-$(CONFIGFILE): $(NAME).conf checksudo
+# Install logrotate configuration file
+$(LOGROTATE): logrotate
+	$(INSTALL) --mode=$(READMODE) $< $@
+
+# Install local binary
+$(LOCALBIN): $(NAME)-start
 	$(INSTALL) $< $(dir $@)
 
-$(LOGFILE): checksudo
+# Install desktop entry
+$(DESKTOPENTRY): $(NAME)-start.desktop
+	$(INSTALL) --mode=$(READMODE) $< $(dir $@)
+
+# Install systemd service upon boot
+$(SERVICEBOOT): $(NAME)-boot.service
+	$(INSTALL) --mode=$(READMODE) $< $(dir $@)
+
+# Install systemd service upon suspend
+$(SERVICESUSPEND): $(NAME)-suspend.service
+	$(INSTALL) --mode=$(READMODE) $< $(dir $@)
+
+# Create empty logfile
+$(LOGFILE):
 	touch $@
 	chgrp users $@
 	chmod 660 $@
 
-$(LOGROTATE): logrotate checksudo
-	$(INSTALL) $< $@
-
-$(LOCALBIN): $(NAME)-start checksudo
-	$(INSTALL) $< $(dir $@)
-
-$(DESKTOPENTRY): $(NAME)-start.desktop checksudo
-	$(INSTALL) $< $(dir $@)
-
-$(SERVICEBOOT): $(NAME)-boot.service checksudo
-	$(INSTALL) $< $(dir $@)
-
-$(SERVICESUSPEND): $(NAME)-suspend.service checksudo
-	$(INSTALL) $< $(dir $@)
+# Create default configuration file
+$(CONFIGFILE): $(NAME).conf
+	$(INSTALL) --mode=$(READMODE) $< $(dir $@)
 
 .PHONY: clean
