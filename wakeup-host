@@ -1,0 +1,147 @@
+#!/bin/sh
+#/etc/init.d/wakeup-host
+
+### BEGIN INIT INFO
+# Provides: wakeup-host
+# Required-Start: $all
+# Required-Stop: $network $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start wakeup-host
+# Description: Enable service provided by wakeup-host.
+### END INIT INFO
+
+usage() {
+cat << EOF
+
+Usage: wakeup-host [options] [MODE]
+
+This script launches a remote host on a given MAC address.
+
+MODE:
+   start      Call wakeonlan
+   stop       Not implemented
+   restart    Stop and restart wakeonlan
+
+OPTIONS:
+   -m <addr>  Set MAC address of remote host
+   -l <file>  Report exit status to logfile
+   -d <sec>   Delay start of wakeonlan about number of seconds (default:2)
+   -r <num>   Re-start if wakeonlan fails
+   -h         Show this message
+EOF
+}
+
+# Defaults
+MAC=
+WOL=/usr/bin/wakeonlan
+DELAY=2
+RETRY=0
+LOGFILE=/var/log/wakeup-host.log
+
+# Local settings
+CONFIGFILE=/etc/wakeup-host.conf
+
+# Read local defaults where available
+if [ -f ${CONFIGFILE} ]
+then
+    $(confget -c -f ${CONFIGFILE} MAC)     &&     MAC=$(confget  -nf ${CONFIGFILE} MAC)
+    $(confget -c -f ${CONFIGFILE} WOL)     &&     WOL=$(confget  -nf ${CONFIGFILE} WOL)
+    $(confget -c -f ${CONFIGFILE} DELAY)   &&   DELAY=$(confget  -nf ${CONFIGFILE} DELAY)
+    $(confget -c -f ${CONFIGFILE} RETRY)   &&   RETRY=$(confget  -nf ${CONFIGFILE} RETRY)
+    $(confget -c -f ${CONFIGFILE} LOGFILE) && LOGFILE=$(confget -Snf ${CONFIGFILE} LOGFILE)
+fi
+
+# Parse command line options
+while getopts m:r:l:d:h OPTION
+do
+    case "${OPTION}"
+    in
+        m)  MAC=${OPTARG}
+            ;;
+        r)  RETRY=${OPTARG}
+            ;;
+        l)  LOGFILE=${OPTARG}
+            ;;
+        d)  DELAY=${OPTARG}
+            ;;
+        h)  usage
+            echo MAC=${MAC}
+            exit 0
+            ;;
+        \?) usage
+            exit 1
+            ;;
+    esac
+done
+
+# Stop if wakeonlan not executable
+[ ! -x "${WOL}" ] && echo "${WOL} not executable, stopped" && exit 1
+
+# Stop if MAC address unset
+[ -z ${MAC+x} ] && echo "MAC undefined, stopped" && exit 2
+
+# Stop if DELAY not a number
+! [[ ${DELAY} =~ '^[0-9]+$' ]] && echo "DELAY not a number" && exit 3
+
+# Stop if RETRY not a number
+! [[ ${RETRY} =~ '^[0-9]+$' ]] && echo "RETRY not a number" && exit 4
+
+# Skip options and shift index
+shift $((OPTIND-1))
+
+# Fetch argument
+MODE="$1"
+ECODE=0
+
+case "${MODE}"
+in
+    start)
+        echo "Booting all slaves through wakeonlan ..."
+        TRY=0
+        while [ ${TRY} -le ${RETRY} ]
+        do
+            sleep ${DELAY}
+            ${WOL} ${MAC}
+            ECODE=$?
+            if [ ${ECODE} -eq 0 ]
+            then
+                echo "Finished booting all slaves."
+                break
+            else
+                echo -n "Error: wakeonlan failed with error ${ECODE} "
+                if [ ${TRY} -gt 0 ]
+                then
+                    echo "(retry ${TRY} of ${RETRY})"
+                else
+                    echo
+                fi
+            fi
+            # Increment counter
+            ((TRY++))
+        done
+        ;;
+
+    stop)
+        echo "Stop not implemented. Doing nothing...";
+        ;;
+
+    restart|force-reload)
+        $0 stop
+        $0 -d 10 start
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 2
+        ;;
+esac
+
+# Update logfile
+if [ -w "${LOGFILE}" ] && [ ${MODE} != 'restart' ] && [ ${MODE} != 'force-reload' ]
+then
+    echo "$(date '+%b %d %T'): $(hostname) $(basename $0): ${MODE} for ${MAC} issued by ${USER} $(if [ ${ECODE} -eq 0 ]; then echo "(ok)"; else echo "(error ${ECODE})"; fi)" >> ${LOGFILE}
+fi
+
+# Terminate successfully
+exit 0

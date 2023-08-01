@@ -1,0 +1,10 @@
+[Unit]
+Description=Wakeonlan magic packet service (at boot time)
+Wants=network-online.target
+After=syslog.service network.target network-online.target
+
+[Service]
+ExecStart=/etc/init.d/wakeup-host start
+
+[Install]
+WantedBy=default.target

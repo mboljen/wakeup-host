@@ -1,0 +1,9 @@
+/var/log/wakeup-host.log
+{
+    missingok
+    rotate 10
+    daily
+    compress
+    create 0660 root users
+    notifempty
+}

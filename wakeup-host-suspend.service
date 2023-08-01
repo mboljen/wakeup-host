@@ -1,0 +1,9 @@
+[Unit]
+Description=Wakeonlan magic packet service (after suspend or hibernate)
+After=suspend.target hibernate.target hybrid-sleep.target
+
+[Service]
+ExecStart=/etc/init.d/wakeup-host start
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target

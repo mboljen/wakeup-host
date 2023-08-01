@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Value=1.0
+Type=Application
+Name=WakeUp Server
+GenericName=WakeUp Server
+Comment=Ping and wakeup server
+Icon=boot
+Exec=wakeup-host
+Categories=System;Network;
