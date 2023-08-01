@@ -44,15 +44,18 @@ prerequisites: checksudo
 
 enable: checksudo
 	$(SYSTEMCTL) enable $(NAME)-boot $(NAME)-suspend
+	$(SYSTEMCTL) daemon-reload
 
 disable: checksudo
 	$(SYSTEMCTL) disable $(NAME)-boot $(NAME)-suspend
 	$(SYSTEMCTL) daemon-reload
 
 install: checksudo prerequisites $(INSTALLFILES)
+	update-desktop-database
 
 uninstall: checksudo
 	$(RM) $(INSTALLFILES)
+	update-desktop-database
 
 checksudo:
 ifneq ($(shell id -u),0)
@@ -84,6 +87,5 @@ $(SERVICEBOOT): $(NAME)-boot.service checksudo
 
 $(SERVICESUSPEND): $(NAME)-suspend.service checksudo
 	$(INSTALL) $< $(dir $@)
-
 
 .PHONY: clean

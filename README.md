@@ -1,6 +1,6 @@
 # wakeup-host
 
-Service to wakeup host during boot time.
+Service to wakeup remote host during boot time.
 
 
 ## Installation
@@ -24,10 +24,10 @@ $ make uninstall
 
 Use the configuration file `/etc/wakeup-host.conf` to apply default settings:
 
-+ `MAC`: the MAC-address of the default host (default: none)
++ `MAC`: the address of the default host (default: none)
 + `WOL`: location of the `wakeonlan` utility (default: `/usr/bin/wakeonlan`)
-+ `DELAY`: number of seconds to wait until the next attempt is launched (default: `0`)
-+ `RETRY`: maximum number of retries if wakeonlan fails (default: `0`)
++ `DELAY`: number of seconds to wait until the next invocation of `wakeonlan` is launched (default: `10`)
++ `RETRY`: maximum number of retries if `wakeonlan` fails (default: `2`)
 + `LOGFILE`: location of the logfile (default: `/var/log/wakeup-host.log`)
 
 Use the following command to issue the command `start` on `/etc/init.d/wakeup-host`:
@@ -36,21 +36,21 @@ Use the following command to issue the command `start` on `/etc/init.d/wakeup-ho
 $ wakeup-host-start
 ```
 
-There is an desktop entry stored in `/usr/local/applications` that can be invoked in the desktop environment.
+There is a desktop entry stored in `/usr/local/applications` that can be invoked from the menu of the desktop environment.
 
-Use the following commands to enable and disable the automatic `systemd` service to invoke wakeonlan during boot and suspend times.
+Use the following commands to enable and disable the automatic `systemd` service to invoke `wakeonlan` during boot and suspend times.
 
 ```bash
 $ make enable
 $ make disable
 ```
 
-Check the contents of the logfile `/var/log/wakeup-host.log` that is rotated regularly via `logrotated`.
+Check the contents of the logfile that is monitored using `logrotate`.
 
 
 ## See also
 
-systemd, wakeonlan
+[systemd](https://www.freedesktop.org/wiki/Software/systemd), [wakeonlan](https://github.com/jpoliv/wakeonlan)
 
 
 ## Contributing
