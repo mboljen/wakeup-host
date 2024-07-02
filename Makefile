@@ -49,7 +49,10 @@ debug:
 	$(info SERVICESUSPEND = $(SERVICESUSPEND))
 
 clean:
-	$(info Target `clean` not implemented yet)
+	$(info Target `$@` not implemented yet)
+
+veryclean: clean
+	$(info Target `$@` not implemented yet)
 
 tag:
 	git tag v$(VERSION)
@@ -110,4 +113,4 @@ $(LOGFILE):
 $(CONFIGFILE): $(NAME).conf
 	$(INSTALL) --mode=$(READMODE) $< $(dir $@)
 
-.PHONY: clean
+.PHONY: clean veryclean

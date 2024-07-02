@@ -1,6 +1,6 @@
 # wakeup-host
 
-Service to wakeup remote host during boot time.
+Service to wakeup remote host during boot time
 
 
 ## Synopsis
@@ -11,7 +11,7 @@ Use the following command to issue the command `start` on `/etc/init.d/wakeup-ho
 $ wakeup-host-start
 ```
 
-There is a desktop entry stored in `/usr/local/applications` that can be invoked from the menu of the desktop environment.
+There is a desktop entry stored in `/usr/local/share/applications` that can be invoked from the menu of the desktop environment.
 
 Use the following commands to enable and disable the automatic `systemd` service to invoke `wakeonlan` during boot and suspend times.
 
@@ -21,6 +21,12 @@ $ make disable
 ```
 
 Check the contents of the logfile that is monitored using `logrotate`.
+
+
+## Requirements
+
++ [systemd](https://www.freedesktop.org/wiki/Software/systemd)
++ [wakeonlan](https://github.com/jpoliv/wakeonlan)
 
 
 ## Installation
@@ -67,11 +73,6 @@ LOGFILE=/var/log/wakeup-host.log
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
-
-
-## See also
-
-[systemd](https://www.freedesktop.org/wiki/Software/systemd), [wakeonlan](https://github.com/jpoliv/wakeonlan)
 
 
 ## License
